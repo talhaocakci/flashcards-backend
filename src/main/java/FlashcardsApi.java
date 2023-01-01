@@ -1,4 +1,9 @@
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jws;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.ServletConfig;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -71,7 +76,22 @@ public class FlashcardsApi extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 
-        if (null == request.getSession().getAttribute("username")) {
+        String authorization = request.getHeader("Authorization");
+
+        Claims body = null;
+
+        try {
+
+            body = Jwts.parserBuilder()
+                    .setSigningKey(LoginApi.key)
+                    .build()
+                    .parseClaimsJws(authorization)
+                    .getBody();
+        } catch (Exception e) {
+
+        }
+
+        if (body == null || body.getSubject() == null) {
 
             PrintWriter out = response.getWriter();
             response.setContentType("application/json");
@@ -93,7 +113,7 @@ public class FlashcardsApi extends HttpServlet {
 
         flashcard.setId(newId);
 
-        flashcard.setCreator((String)request.getSession().getAttribute("username"));
+        flashcard.setCreator(body.getSubject());
 
         flashCards.add(flashcard);
 
