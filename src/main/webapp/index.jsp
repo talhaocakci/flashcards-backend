@@ -1,5 +1,11 @@
 <html>
+<head>
+ <link rel="stylesheet" href="styles.css">
+ <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Trirong">
+</head>
+
 <body>
-<h2>Hello World!</h2>
+    <div class="flashcard center-screen">
+    <h2>Welcome to flash card application!</h2>
 </body>
 </html>
