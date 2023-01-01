@@ -25,3 +25,36 @@
  background: rgb(0,0,0);
  background: linear-gradient(0deg, rgba(0,0,0,0.506061799719888) 0%, rgba(253,45,45,1) 100%);
 }
+
+.btn {
+background: #fff;
+    padding: 5px;
+    width: 150px;
+    height: 35px;
+    border: 1px solid #FF4081;
+    margin-top: 25px;
+    cursor: pointer;
+    transition: 0.3s;
+    box-shadow: 0 50px #ff4081 inset;
+    color: #fff;
+}
+
+.form-group .form-control {
+    width: 100%;
+    position: relative;
+    z-index: 3;
+    height: 35px;
+    background: none;
+    border: none;
+    padding: 5px 0;
+    transition: 0.3s;
+    border-bottom: 1px solid #777;
+    color: #ffff;
+    font-family: "Trirong", serif;
+}
+
+.successmessage {
+    color: #ffff;
+    font-family: "Trirong", serif;
+    background: #01FF70
+}

@@ -9,6 +9,10 @@
 </head>
 
 <body>
+    <p class = "successmessage">
+        <c:out value="${message}"/>
+    </p>
+
     <c:choose>
          <c:when test = "${empty error}" >
              <div class="center-screen">

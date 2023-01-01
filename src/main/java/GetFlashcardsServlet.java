@@ -54,4 +54,22 @@ public class GetFlashcardsServlet extends HttpServlet {
         response.setContentType("text/html");
         getServletContext().getRequestDispatcher("/flashcard.jsp").forward(request, response);
     }
+
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+
+        String content = request.getParameter("content");
+
+        Integer newId = flashCards.get(flashCards.size() - 1).getId();
+
+        var flashCard = new Flashcard(newId, content);
+
+        flashCards.add(flashCard);
+
+        request.setAttribute("cards", flashCards);
+
+        request.setAttribute("message", "Your flashcard has been created");
+
+        getServletContext().getRequestDispatcher("/flashcard.jsp").forward(request, response);
+    }
 }

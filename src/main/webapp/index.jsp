@@ -6,6 +6,8 @@
 
 <body>
     <div class="flashcard center-screen">
-    <h2>Welcome to flash card application!</h2>
+        <h2>Welcome to flash card application!</h2>
+        <a href ="create_flashcard.jsp">Create flashcard</a>
+    </div>
 </body>
 </html>
