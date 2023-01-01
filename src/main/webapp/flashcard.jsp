@@ -1,3 +1,6 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@taglib prefix="c" uri="jakarta.tags.core" %>
+
 <html>
 
 <head>
@@ -6,14 +9,21 @@
 </head>
 
 <body>
- <% if (request.getAttribute("id") != null ) {%>
-    <div class="center-screen flashcard">
-         <%= request.getAttribute("content") %>
-    </div>
- <% } else {%>
-     <div class="center-screen error">
-        <%= request.getAttribute("error") %>
-     </div>
- <% }%>
+    <c:choose>
+         <c:when test = "${empty error}" >
+             <div class="center-screen">
+                  <c:forEach items="${cards}" var="card">
+                     <div class="flashcard">
+                            <c:out value="${card.content}"/>
+                     </div>
+                  </c:forEach>
+              </div>
+         </c:when>
+         <c:otherwise>
+            <div class="center-screen error">
+                <c:out value="${error}" default="Something wrong happened"/>
+            </div>
+          </c:otherwise>
+     </c:choose>
 </body>
 </html>

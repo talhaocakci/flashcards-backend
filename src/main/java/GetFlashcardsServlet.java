@@ -5,26 +5,27 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @WebServlet(urlPatterns = "/flashcards")
 public class GetFlashcardsServlet extends HttpServlet {
 
-    Map<Integer, String> flashCards = new HashMap<Integer, String>();
+    List<Flashcard> flashCards = new ArrayList<>();
 
     @Override
     public void init(ServletConfig config) throws ServletException {
         super.init(config);
 
-        flashCards.put(1, "Do the best you can until you know better. Then when you know better, do better");
-        flashCards.put(2, "Almost everything will work again if you unplug it for a few minutes, including you.");
-
+        flashCards.add(new Flashcard(1, "Do the best you can until you know better. Then when you know better, do better"));
+        flashCards.add(new Flashcard(2, "Almost everything will work again if you unplug it for a few minutes, including you."));
     }
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String cardId = request.getParameter("cardId");
+
+        List<Flashcard> flashcardList = new ArrayList<>();
 
         if (cardId != null) {
             Integer flashcardId;
@@ -32,9 +33,12 @@ public class GetFlashcardsServlet extends HttpServlet {
             try {
                 flashcardId = Integer.parseInt(cardId);
 
-                if (flashCards.containsKey(flashcardId)) {
-                    request.setAttribute("content", flashCards.get(flashcardId));
-                    request.setAttribute("id", flashcardId);
+                Optional<Flashcard> cardO =
+                        flashCards.stream().filter(c -> flashcardId.equals(c.getId())).findFirst();
+
+                if (cardO.isPresent()) {
+                    flashcardList.add(cardO.get());
+                    request.setAttribute("cards", flashcardList);
                 } else {
                     request.setAttribute("error", String.format("Flash card could not be found by id %s", flashcardId));
                 }
@@ -43,7 +47,8 @@ public class GetFlashcardsServlet extends HttpServlet {
                 request.setAttribute("error", String.format("Id is not acceptable %s", cardId));
             }
         } else {
-            request.setAttribute("error", "Please provide a card id");
+
+            request.setAttribute("cards", flashCards);
         }
 
         response.setContentType("text/html");
