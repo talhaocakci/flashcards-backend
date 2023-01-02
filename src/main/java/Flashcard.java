@@ -1,7 +1,13 @@
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+
 public class Flashcard  {
+    @NotNull(message = "Id could not be retrieved")
     private Integer id;
+    @NotBlank(message = "Content is not set")
     private String content;
 
+    @NotBlank(message = "Creator is not known")
     private String creator;
 
     public Flashcard() {

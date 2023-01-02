@@ -1,28 +1,30 @@
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.ServletConfig;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validation;
+import jakarta.validation.Validator;
+import jakarta.validation.ValidatorFactory;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @WebServlet(urlPatterns = {"/api/flashcards", "/api/flashcards/*"})
 public class FlashcardsApi extends HttpServlet {
 
     List<Flashcard> flashCards = new ArrayList<>();
     ObjectMapper objectMapper = new ObjectMapper();
+
+    ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
+    Validator validator = factory.getValidator();
 
     @Override
     public void init(ServletConfig config) throws ServletException {
@@ -111,11 +113,25 @@ public class FlashcardsApi extends HttpServlet {
             return;
         }
 
-        Flashcard inputFlashCard = objectMapper.readValue(request.getInputStream(), Flashcard.class);
+        FlashcardPostRequest inputFlashCard = objectMapper.readValue(request.getInputStream(), FlashcardPostRequest.class);
+
+        Set<ConstraintViolation<FlashcardPostRequest>> validationResults = validator.validate(inputFlashCard);
 
         String message = "";
 
-        if (inputFlashCard.getId() == null) {
+        if (!validationResults.isEmpty()) {
+
+            message = validationResults.stream().map(ConstraintViolation::getMessage).collect(Collectors.joining( " "));
+
+            String responseString = objectMapper.writeValueAsString(new BasicResponse(message));
+
+            out.print(responseString);
+
+            out.flush();
+
+            return;
+
+        } else if (inputFlashCard.getId() == null) {
 
             // if card id is null, that means a new card will be created
 
@@ -123,13 +139,20 @@ public class FlashcardsApi extends HttpServlet {
 
             inputFlashCard.setId(newId);
 
-            inputFlashCard.setCreator(activeUser);
+            Flashcard flashcard = new Flashcard();
+            flashcard.setContent(inputFlashCard.getContent());
+            flashcard.setId(newId);
+            flashcard.setCreator(activeUser);
 
-            flashCards.add(inputFlashCard);
-
-            response.setStatus(200);
-
-            message = "Card has been created";
+            Set<ConstraintViolation<Flashcard>> entityValidationResults = validator.validate(flashcard);
+            if (!entityValidationResults.isEmpty()) {
+                response.setStatus(500);
+                message = entityValidationResults.stream().map(ConstraintViolation::getMessage).collect(Collectors.joining( " "));
+            } else {
+                flashCards.add(flashcard);
+                response.setStatus(200);
+                message = "Card has been created";
+            }
 
         } else {
             // if cardId is given, that means update is requested for this card
