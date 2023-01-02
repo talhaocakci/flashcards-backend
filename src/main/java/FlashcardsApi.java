@@ -17,7 +17,6 @@ import java.io.PrintWriter;
 import java.util.*;
 import java.util.stream.Collectors;
 
-@WebServlet(urlPatterns = {"/api/flashcards", "/api/flashcards/*"})
 public class FlashcardsApi extends HttpServlet {
 
     FlashcardRetriever retriever;
