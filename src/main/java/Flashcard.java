@@ -7,9 +7,10 @@ public class Flashcard  {
     public Flashcard() {
     }
 
-    public Flashcard(Integer id, String content) {
+    public Flashcard(Integer id, String content, String creator) {
         this.id = id;
         this.content = content;
+        this.creator = creator;
     }
 
     public Integer getId() {
@@ -18,6 +19,10 @@ public class Flashcard  {
 
     public String getContent() {
         return content;
+    }
+
+    public void setContent(String content) {
+        this.content = content;
     }
 
     public void setId(Integer id) {

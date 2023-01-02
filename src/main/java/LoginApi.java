@@ -56,8 +56,7 @@ public class LoginApi extends HttpServlet {
 
             String jws = Jwts.builder()
                     .setIssuer("javathlon")
-                    .setSubject("msilverman")
-                    .claim("username", userO.get().getUserName())
+                    .setSubject(userO.get().getUserName())
                     .claim("scope", "admin")
                     .setIssuedAt(new Date())
                     .setExpiration(Date.from(Instant.now().plusSeconds(3000)))

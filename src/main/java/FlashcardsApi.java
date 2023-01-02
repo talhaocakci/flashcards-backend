@@ -27,8 +27,8 @@ public class FlashcardsApi extends HttpServlet {
     public void init(ServletConfig config) throws ServletException {
         super.init(config);
 
-        flashCards.add(new Flashcard(1, "Do the best you can until you know better. Then when you know better, do better"));
-        flashCards.add(new Flashcard(2, "Almost everything will work again if you unplug it for a few minutes, including you."));
+        flashCards.add(new Flashcard(1, "Do the best you can until you know better. Then when you know better, do better", "demouser"));
+        flashCards.add(new Flashcard(2, "Almost everything will work again if you unplug it for a few minutes, including you.", "tocakci"));
     }
 
     @Override
@@ -78,11 +78,11 @@ public class FlashcardsApi extends HttpServlet {
 
         String authorization = request.getHeader("Authorization");
 
-        Claims body = null;
+        Claims claims = null;
 
         try {
 
-            body = Jwts.parserBuilder()
+            claims = Jwts.parserBuilder()
                     .setSigningKey(LoginApi.key)
                     .build()
                     .parseClaimsJws(authorization)
@@ -91,11 +91,14 @@ public class FlashcardsApi extends HttpServlet {
 
         }
 
-        if (body == null || body.getSubject() == null) {
+        PrintWriter out = response.getWriter();
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
 
-            PrintWriter out = response.getWriter();
-            response.setContentType("application/json");
-            response.setCharacterEncoding("UTF-8");
+        final String activeUser = claims != null ? claims.getSubject() : null;
+
+        if (activeUser == null) {
+
             response.setStatus(403);
 
             String responseString = objectMapper.writeValueAsString(new BasicResponse("Please log in to create cards"));
@@ -107,22 +110,52 @@ public class FlashcardsApi extends HttpServlet {
             return;
         }
 
-        Flashcard flashcard = objectMapper.readValue(request.getInputStream(), Flashcard.class);
+        Flashcard inputFlashCard = objectMapper.readValue(request.getInputStream(), Flashcard.class);
 
-        Integer newId = flashCards.get(flashCards.size() - 1).getId();
+        String message = "";
 
-        flashcard.setId(newId);
+        if (inputFlashCard.getId() == null) {
 
-        flashcard.setCreator(body.getSubject());
+            // if card id is null, that means a new card will be created
 
-        flashCards.add(flashcard);
+            Integer newId = flashCards.get(flashCards.size() - 1).getId();
 
-        PrintWriter out = response.getWriter();
-        response.setContentType("application/json");
-        response.setCharacterEncoding("UTF-8");
-        response.setStatus(200);
+            inputFlashCard.setId(newId);
 
-        String responseString = objectMapper.writeValueAsString(new BasicResponse("Card has been created"));
+            inputFlashCard.setCreator(activeUser);
+
+            flashCards.add(inputFlashCard);
+
+            response.setStatus(200);
+
+            message = "Card has been created";
+
+        } else {
+            // if cardId is given, that means update is requested for this card
+
+            Optional<Flashcard> cardO = flashCards.stream().filter(c -> c.getId().equals(inputFlashCard.getId())).findFirst();
+
+            if (cardO.isPresent()) {
+                // card is found, now check if we are allowed to update it
+                Flashcard retrievedCard = cardO.get();
+                if (retrievedCard.getCreator().equals(activeUser)) {
+                    // you are allowed to update
+                    retrievedCard.setContent(inputFlashCard.getContent());
+                    message = "Card has been updated";
+                    response.setStatus(201);
+                } else {
+                    message = "You tried to update someone else's flash card : " + retrievedCard.getCreator() + " : " + activeUser;
+                    response.setStatus(403);
+                }
+            }
+            else {
+                // card is not found. we can not update it
+                message = "Card is not found";
+                response.setStatus(404);
+            }
+        }
+
+        String responseString = objectMapper.writeValueAsString(new BasicResponse(message));
 
         out.print(responseString);
 

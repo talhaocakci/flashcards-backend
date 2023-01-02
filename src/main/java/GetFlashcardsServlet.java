@@ -17,8 +17,8 @@ public class GetFlashcardsServlet extends HttpServlet {
     public void init(ServletConfig config) throws ServletException {
         super.init(config);
 
-        flashCards.add(new Flashcard(1, "Do the best you can until you know better. Then when you know better, do better"));
-        flashCards.add(new Flashcard(2, "Almost everything will work again if you unplug it for a few minutes, including you."));
+        flashCards.add(new Flashcard(1, "Do the best you can until you know better. Then when you know better, do better", "demouser"));
+        flashCards.add(new Flashcard(2, "Almost everything will work again if you unplug it for a few minutes, including you.", "tocakci"));
     }
 
     @Override
@@ -62,7 +62,7 @@ public class GetFlashcardsServlet extends HttpServlet {
 
         Integer newId = flashCards.get(flashCards.size() - 1).getId();
 
-        var flashCard = new Flashcard(newId, content);
+        var flashCard = new Flashcard(newId, content, "not_known");
 
         flashCards.add(flashCard);
 
