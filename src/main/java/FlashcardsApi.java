@@ -20,19 +20,29 @@ import java.util.stream.Collectors;
 @WebServlet(urlPatterns = {"/api/flashcards", "/api/flashcards/*"})
 public class FlashcardsApi extends HttpServlet {
 
+    FlashcardRetriever retriever;
+
     List<Flashcard> flashCards = new ArrayList<>();
+
     ObjectMapper objectMapper = new ObjectMapper();
 
     ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
     Validator validator = factory.getValidator();
 
+    AuthenticationChecker authenticationChecker;
+
+    public FlashcardsApi() {
+    }
+    public FlashcardsApi(AuthenticationChecker authenticationChecker, FlashcardRetriever retriever) {
+        this.authenticationChecker = authenticationChecker;
+        this.retriever = retriever;
+    }
+
     @Override
     public void init(ServletConfig config) throws ServletException {
         super.init(config);
-
-        flashCards.add(new Flashcard(1, "Do the best you can until you know better. Then when you know better, do better", "demouser"));
-        flashCards.add(new Flashcard(2, "Almost everything will work again if you unplug it for a few minutes, including you.", "tocakci"));
-    }
+        flashCards.addAll(retriever.retrieveAll());
+   }
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -79,26 +89,11 @@ public class FlashcardsApi extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 
-        String authorization = request.getHeader("Authorization");
-
-        Claims claims = null;
-
-        try {
-
-            claims = Jwts.parserBuilder()
-                    .setSigningKey(LoginApi.key)
-                    .build()
-                    .parseClaimsJws(authorization)
-                    .getBody();
-        } catch (Exception e) {
-
-        }
-
         PrintWriter out = response.getWriter();
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
 
-        final String activeUser = claims != null ? claims.getSubject() : null;
+        final String activeUser = authenticationChecker.getAuthenticatedUser(request);
 
         if (activeUser == null) {
 

@@ -1,6 +1,9 @@
 public class BasicResponse {
     String message;
 
+    public BasicResponse() {
+    }
+
     public BasicResponse(String message) {
         this.message = message;
     }
