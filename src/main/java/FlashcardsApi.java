@@ -14,6 +14,7 @@ import jakarta.validation.ValidatorFactory;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -30,18 +31,24 @@ public class FlashcardsApi extends HttpServlet {
 
     AuthenticationChecker authenticationChecker;
 
-    public FlashcardsApi() {
-    }
-    public FlashcardsApi(AuthenticationChecker authenticationChecker, FlashcardRetriever retriever) {
+    PropertyReader<SecurityConfig> propertyReader;
+
+    SecurityConfig securityConfig;
+
+
+    public FlashcardsApi(AuthenticationChecker authenticationChecker, FlashcardRetriever retriever, PropertyReader propertyReader) {
         this.authenticationChecker = authenticationChecker;
         this.retriever = retriever;
+        this.propertyReader = propertyReader;
     }
 
     @Override
     public void init(ServletConfig config) throws ServletException {
         super.init(config);
         flashCards.addAll(retriever.retrieveAll());
-   }
+
+        securityConfig = propertyReader.getConfiguration("security.yaml", SecurityConfig.class);
+    }
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -92,7 +99,7 @@ public class FlashcardsApi extends HttpServlet {
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
 
-        final String activeUser = authenticationChecker.getAuthenticatedUser(request);
+        final String activeUser = authenticationChecker.getAuthenticatedUser(request, securityConfig.getSecret());
 
         if (activeUser == null) {
 
@@ -196,7 +203,7 @@ public class FlashcardsApi extends HttpServlet {
         try {
 
             claims = Jwts.parserBuilder()
-                    .setSigningKey(LoginApi.key)
+                    .setSigningKey(securityConfig.secret.getBytes(StandardCharsets.UTF_8))
                     .build()
                     .parseClaimsJws(authorization)
                     .getBody();

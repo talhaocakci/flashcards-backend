@@ -4,35 +4,40 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.ServletConfig;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import javax.crypto.SecretKey;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.security.Key;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
-@WebServlet(urlPatterns = "/api/login")
 public class LoginApi extends HttpServlet {
-
-    public static Key key = Keys.secretKeyFor(SignatureAlgorithm.HS512);
     List<User> userList = new ArrayList<>();
 
     ObjectMapper objectMapper = new ObjectMapper();
 
+    PropertyReader<SecurityConfig> propertyReader;
+
+    SecurityConfig securityConfig;
+
     @Override
     public void init(ServletConfig config) throws ServletException {
 
-        super.init(config);
-
         userList.add(new User("tocakci", "12345"));
         userList.add(new User("demouser", "12345"));
+
+        securityConfig = propertyReader.getConfiguration("security.yaml", SecurityConfig.class);
+    }
+
+    public LoginApi(PropertyReader propertyReader) {
+        this.propertyReader = propertyReader;
     }
 
     @Override
@@ -54,13 +59,15 @@ public class LoginApi extends HttpServlet {
 
         if (userO.isPresent()) {
 
+            SecretKey sharedSecret = Keys.hmacShaKeyFor(securityConfig.getSecret().getBytes(StandardCharsets.UTF_8));
+
             String jws = Jwts.builder()
                     .setIssuer("javathlon")
                     .setSubject(userO.get().getUserName())
                     .claim("scope", "admin")
                     .setIssuedAt(new Date())
                     .setExpiration(Date.from(Instant.now().plusSeconds(3000)))
-                    .signWith(key)
+                    .signWith(sharedSecret)
                     .compact();
 
             response.setStatus(200);

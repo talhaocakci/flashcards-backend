@@ -7,6 +7,7 @@ import jakarta.servlet.ServletInputStream;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -22,8 +23,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.List;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.*;
 
 @ExtendWith(MockitoExtension.class)
 public class FlashcardsApiTest {
@@ -52,6 +52,9 @@ public class FlashcardsApiTest {
     @Mock
     AuthenticationChecker authenticationChecker;
 
+    @Mock
+    PropertyReader propertyReader;
+
     @Captor
     ArgumentCaptor<String> responseStringCaptor;
 
@@ -60,12 +63,19 @@ public class FlashcardsApiTest {
 
     ObjectMapper objectMapper = new ObjectMapper();
 
+    @BeforeEach
+    public void init() {
+
+        SecurityConfig securityConfig = new SecurityConfig();
+        securityConfig.setSecret("abc");
+        Mockito.doReturn(securityConfig).when(propertyReader).getConfiguration(anyString(), eq(SecurityConfig.class));
+    }
     @Test
     public void testCreateWithNoAuthorization() throws ServletException, IOException {
 
         Mockito.doReturn(printWriter).when(response).getWriter();
 
-        FlashcardsApi servlet = new FlashcardsApi(authenticationChecker, flashcardRetriever) {
+        FlashcardsApi servlet = new FlashcardsApi(authenticationChecker, flashcardRetriever, propertyReader) {
             @Override
             public ServletContext getServletContext() {
                 return servletContext;
@@ -98,7 +108,7 @@ public class FlashcardsApiTest {
 
         Mockito.doReturn(printWriter).when(response).getWriter();
 
-        Mockito.doReturn("tocakci").when(authenticationChecker).getAuthenticatedUser(any(HttpServletRequest.class));
+        Mockito.doReturn("tocakci").when(authenticationChecker).getAuthenticatedUser(any(HttpServletRequest.class), anyString());
 
         Mockito.doReturn(servletInputStream).when(request).getInputStream();
 
@@ -123,7 +133,7 @@ public class FlashcardsApiTest {
 
         Mockito.doReturn(cards).when(flashcardRetriever).retrieveAll();
 
-        FlashcardsApi servlet = new FlashcardsApi(authenticationChecker, flashcardRetriever) {
+        FlashcardsApi servlet = new FlashcardsApi(authenticationChecker, flashcardRetriever, propertyReader) {
             @Override
             public ServletContext getServletContext() {
                 return servletContext;
@@ -160,7 +170,7 @@ public class FlashcardsApiTest {
 
         Mockito.doReturn(cards).when(flashcardRetriever).retrieveAll();
 
-        FlashcardsApi servlet = new FlashcardsApi(authenticationChecker, flashcardRetriever) {
+        FlashcardsApi servlet = new FlashcardsApi(authenticationChecker, flashcardRetriever, propertyReader) {
             @Override
             public ServletContext getServletContext() {
                 return servletContext;
