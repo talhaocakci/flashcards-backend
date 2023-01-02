@@ -14,10 +14,11 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
-@WebServlet(urlPatterns = "/api/flashcards")
+@WebServlet(urlPatterns = {"/api/flashcards", "/api/flashcards/*"})
 public class FlashcardsApi extends HttpServlet {
 
     List<Flashcard> flashCards = new ArrayList<>();
@@ -101,7 +102,7 @@ public class FlashcardsApi extends HttpServlet {
 
             response.setStatus(403);
 
-            String responseString = objectMapper.writeValueAsString(new BasicResponse("Please log in to create cards"));
+            String responseString = objectMapper.writeValueAsString(new BasicResponse("Please log in to update/create cards"));
 
             out.print(responseString);
 
@@ -160,5 +161,84 @@ public class FlashcardsApi extends HttpServlet {
         out.print(responseString);
 
         out.flush();
+    }
+
+    @Override
+    protected void doDelete(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+
+        String requestUri = request.getRequestURI();
+
+        List<String> urlParts = Arrays.asList(requestUri.split("/"));
+
+        Integer cardId = urlParts.size() == 5 ? Integer.valueOf(urlParts.get(4)) : null;
+
+        String authorization = request.getHeader("Authorization");
+
+        Claims claims = null;
+
+        try {
+
+            claims = Jwts.parserBuilder()
+                    .setSigningKey(LoginApi.key)
+                    .build()
+                    .parseClaimsJws(authorization)
+                    .getBody();
+        } catch (Exception e) {
+
+        }
+
+        final String activeUser = claims != null ? claims.getSubject() : null;
+
+        String message = "Please provide card id " + requestUri;
+
+        PrintWriter out = response.getWriter();
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+
+        if (activeUser == null) {
+
+            message = "Please log in to delete cards";
+
+            response.setStatus(403);
+
+            String responseString = objectMapper.writeValueAsString(new BasicResponse(message));
+
+            out.print(responseString);
+
+            out.flush();
+
+            return;
+        }
+
+        if (cardId != null) {
+            Optional<Flashcard> cardO = flashCards.stream().filter(c -> c.getId().equals(cardId)).findFirst();
+
+            if (cardO.isPresent()) {
+                // card is found, now check if we are allowed to delete it
+                Flashcard retrievedCard = cardO.get();
+                if (retrievedCard.getCreator().equals(activeUser)) {
+                    // you are allowed to delete
+                    // re-initiate list without given item
+                    flashCards = flashCards.stream().filter(c -> !c.getId().equals(cardId)).toList();
+                    message = "Card has been deleted";
+                    response.setStatus(201);
+                } else {
+                    message = "You tried to delete someone else's flash card : " + retrievedCard.getCreator() + " : " + activeUser;
+                    response.setStatus(403);
+                }
+            }
+            else {
+                // card is not found. we can not update it
+                message = "Card is not found";
+                response.setStatus(404);
+            }
+        }
+
+        String responseString = objectMapper.writeValueAsString(new BasicResponse(message));
+
+        out.print(responseString);
+
+        out.flush();
+
     }
 }

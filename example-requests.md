@@ -30,11 +30,15 @@
     -H 'Content-Type: application/json' \
     -d '{"content":"my experimental quote"}'
 
-6- Update card with demouser user
 
-5- Create flashcard by using JWT token acquired from login response
+6- Update flashcard by using JWT token acquired from login response
 
     curl -X POST "localhost:8080/flashcards-1.0/api/flashcards" \
-    -H 'Authorization: eyJhbGciOiJIUzUxMiJ9.eyJpc3MiOiJqYXZhdGhsb24iLCJzdWIiOiJkZW1vdXNlciIsInNjb3BlIjoiYWRtaW4iLCJpYXQiOjE2NzI2NTg2NTUsImV4cCI6MTY3MjY2MTY1NX0.Yo2vPFXVt897FsCQiV3djlybfDexLseN32_1YVAHUkL-Y5tAbtWM7PfgVv3Kh0QarIUFyjjNcSFsaID7cmBYiA' \
+    -H 'Authorization: PUT_TOKEN_FROM_THE_RESPONSE_OF_LOGIN_REQUEST' \
     -H 'Content-Type: application/json' \
     -d '{"content":"my experimental quote", "id": 1}'
+
+7- Delete flashcard by using JWT token acquired from login response
+
+    curl -X DELETE "localhost:8080/flashcards-1.0/api/flashcards/1" \
+    -H 'Authorization: PUT_TOKEN_FROM_THE_RESPONSE_OF_LOGIN_REQUEST' \
